@@ -79,9 +79,13 @@ private:
   PHX::MDField<const MeshScalarT, Cell, Node> bedTopo;
   PHX::MDField<const MeshScalarT, Cell, Node> topSurface;
   PHX::MDField<const MeshScalarT, Cell, Node> H;
+//  PHX::MDField<const MeshScalarT, Cell, Node> Hmin;
+//  PHX::MDField<const MeshScalarT, Cell, Node> Hmax;
 
   // Output:
   PHX::MDField<MeshScalarT, Cell, Node, Dim> coordVecOut;
+  PHX::MDField<MeshScalarT, Cell, Node> topSurfaceOut;
+  PHX::MDField<MeshScalarT, Cell, Node> bedTopoOut;
 
   double minH, rho_i, rho_w;
   unsigned int numDims, numNodes;

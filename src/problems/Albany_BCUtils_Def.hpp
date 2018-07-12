@@ -1039,7 +1039,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
             p->set<double>("Water Density", rho_w);
             p->set<string>("BetaXY", betaName);
             p->set<string>("Beta Field Name", "basal_friction");
-            p->set<string>("thickness Field Name", "ice_thickness");
+            p->set<string>("thickness Field Name", "ice_thickness_param");
             p->set<string>("BedTopo Field Name", "bed_topography");
             p->set<bool>(
                 "Use GLP",
@@ -1062,7 +1062,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
             p->set<string>("Beta Field Name", "basal_friction");
             p->set<string>("DOF Name", dof_names[0]);
             p->set<bool>("Vector Field", isVectorField);
-            p->set<string>("thickness Field Name", "ice_thickness");
+            p->set<string>("thickness Field Name", "ice_thickness_param");
             if (isVectorField)
               p->set<RCP<DataLayout>>("DOF Data Layout", dl->node_vector);
             else
@@ -1080,7 +1080,10 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
             p->set<double>("Gravity Acceleration", g);
             p->set<double>("Ice Density", rho);
             p->set<double>("Water Density", rho_w);
-            p->set<string>("thickness Field Name", "ice_thickness");
+            p->set<string>("thickness Field Name", "ice_thickness_param");
+            p->set<string>("thickness lowerbound Field Name", "ice_thickness_lowerbound");
+            p->set<string>("thickness upperbound Field Name", "ice_thickness_upperbound");
+            p->set<string>("thickness observed Field Name", "observed_ice_thickness");
             p->set<string>("Elevation Field Name", "surface_height");
             p->set<string>("DOF Name", dof_names[0]);
             p->set<bool>("Vector Field", isVectorField);
@@ -1307,7 +1310,7 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
   // Build evaluator for thickness
   string NeuGT = "Evaluator for Gather thickness";
   {
-    const string paramName = "ice_thickness";
+    const string paramName = "ice_thickness_param";
     RCP<ParameterList> p = rcp(new ParameterList());
     p->set<int>("Type", traits_type::typeSNP);
 
@@ -1332,6 +1335,45 @@ Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList(
     p->set<string>("Field Name", "surface_height");
 
     evaluators_to_build[NeuGSH] = p;
+  }
+  
+  string NeuGTU = "Evaluator for Gather ice_thickness_upperbound";
+  {
+    RCP<ParameterList> p = rcp(new ParameterList());
+    p->set<int>("Type", traits_type::typeSF);
+
+    // for new way
+    p->set<RCP<DataLayout>>("State Field Layout", dl->node_scalar);
+    p->set<string>("State Name", "ice_thickness_upperbound");
+    p->set<string>("Field Name", "ice_thickness_upperbound");
+
+    evaluators_to_build[NeuGTU] = p;
+  }
+  
+  string NeuGTL = "Evaluator for Gather ice_thickness_lowerbound";
+  {
+    RCP<ParameterList> p = rcp(new ParameterList());
+    p->set<int>("Type", traits_type::typeSF);
+
+    // for new way
+    p->set<RCP<DataLayout>>("State Field Layout", dl->node_scalar);
+    p->set<string>("State Name", "ice_thickness_lowerbound");
+    p->set<string>("Field Name", "ice_thickness_lowerbound");
+
+    evaluators_to_build[NeuGTL] = p;
+  }
+  
+  string NeuGTO = "Evaluator for Gather observed_ice_thickness";
+  {
+    RCP<ParameterList> p = rcp(new ParameterList());
+    p->set<int>("Type", traits_type::typeSF);
+
+    // for new way
+    p->set<RCP<DataLayout>>("State Field Layout", dl->node_scalar);
+    p->set<string>("State Name", "observed_ice_thickness");
+    p->set<string>("Field Name", "observed_ice_thickness");
+
+    evaluators_to_build[NeuGTO] = p;
   }
 #endif
 

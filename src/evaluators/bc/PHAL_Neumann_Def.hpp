@@ -296,10 +296,19 @@ NeumannBase(const Teuchos::ParameterList& p) :
 #ifdef ALBANY_FELIX
         thickness_field = decltype(thickness_field)(
           p.get<std::string>("thickness Field Name"), dl->node_scalar);
+        thickness_up_field = decltype(thickness_up_field)(
+          p.get<std::string>("thickness upperbound Field Name"), dl->node_scalar);
+        thickness_low_field = decltype(thickness_low_field)(
+          p.get<std::string>("thickness lowerbound Field Name"), dl->node_scalar);
+        thickness_obs_field = decltype(thickness_obs_field)(
+          p.get<std::string>("thickness observed Field Name"), dl->node_scalar);
         elevation_field = decltype(elevation_field)(
           p.get<std::string>("Elevation Field Name"), dl->node_scalar);
 
         this->addDependentField(thickness_field);
+        this->addDependentField(thickness_up_field);
+        this->addDependentField(thickness_low_field);
+        this->addDependentField(thickness_obs_field);
         this->addDependentField(elevation_field);
 #endif
     }
@@ -629,14 +638,49 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     weighted_trans_basis_refPointsSide = Kokkos::createViewWithType<DynRankViewMeshScalarT>(weighted_trans_basis_refPointsSide_buffer, weighted_trans_basis_refPointsSide_buffer.data(), numCells_, numNodes, numQPsSide);
     physPointsCell =Kokkos::createViewWithType<DynRankViewMeshScalarT>(physPointsCell_buffer, physPointsCell_buffer.data(), numCells_, numNodes, cellDims);
 
-
     cubatureSide[side]->getCubature(cubPointsSide, cubWeightsSide);
+    
+    if(bc_type == LATERAL) {
+    const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+    const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+
+    int numLayers = layeredMeshNumbering.numLayers;
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+    const Teuchos::ArrayRCP<double>& layers_ratio = layeredMeshNumbering.layers_ratio;
+    Teuchos::ArrayRCP<double> sigmaLevel(numLayers+1);
+    sigmaLevel[0] = 0.; sigmaLevel[numLayers] = 1.;
+    for(int i=1; i<numLayers; ++i)
+      sigmaLevel[i] = sigmaLevel[i-1] + layers_ratio[i-1];
+
+
+
+
 
     // Copy the coordinate data over to a temp container
     for (std::size_t node=0; node < numNodes; ++node)
-      for (std::size_t dim=0; dim < cellDims; ++dim)
+      for (std::size_t iCell=0; iCell < numCells_; ++iCell) {
+        auto cell = cellVec(iCell);
+
+        const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+        LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+        LO base_id, ilevel;
+        layeredMeshNumbering.getIndices(lnodeId, base_id,  ilevel);
+        MeshScalarT H = (thickness_up_field(cell,node) + thickness_low_field(cell,node))/2.0 + (thickness_up_field(cell,node) - thickness_low_field(cell,node))/2.0*std::tanh(thickness_field(cell,node));
+        MeshScalarT top = H*(1.0 - rho/rho_w);
+
+        for (std::size_t dim=0; dim < cellDims; ++dim) {
+          if(dim != 2)
+            physPointsCell(iCell, node, dim) = coordVec(cell,node,dim);
+          else
+            physPointsCell(iCell, node, dim) = top - (1- sigmaLevel[ ilevel])*H;
+        }
+      }   
+    } else {
+      for (std::size_t node=0; node < numNodes; ++node)
         for (std::size_t iCell=0; iCell < numCells_; ++iCell)
-          physPointsCell(iCell, node, dim) = coordVec(cellVec(iCell),node,dim);
+          for (std::size_t dim=0; dim < cellDims; ++dim) 
+            physPointsCell(iCell, node, dim) = coordVec(cellVec(iCell),node,dim);
+    } 
 
     // Map side cubature points to the reference parent cell based on the appropriate side (elem_side)
     Intrepid2::CellTools<PHX::Device>::mapToReferenceSubcell
@@ -758,7 +802,8 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
           {
             for (std::size_t iCell=0; iCell < numCells_; ++iCell) {
               int cell = cellVec(iCell);
-              thicknessOnCell(iCell,node) = thickness_field(cell,node);
+              //thicknessOnCell(iCell,node) = thickness_obs_field(cell,node);
+              thicknessOnCell(iCell,node) = (thickness_up_field(cell,node) + thickness_low_field(cell,node))/2.0 + (thickness_up_field(cell,node) - thickness_low_field(cell,node))/2.0*std::tanh(thickness_field(cell,node));
               elevationOnCell(iCell,node) = elevation_field(cell,node);
               for(int dim = 0; dim < numDOFsSet; dim++)
                 dofCellVec(iCell,node,dim) = dofVec(cell,node,this->offset[dim]);
@@ -1562,7 +1607,8 @@ calc_dudn_lateral(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
     for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
         ScalarT H = thickness_side(cell, pt);
-        ScalarT s = elevation_side(cell, pt);
+   //  if(cell == 0) std::cout<<H<< " ";   
+       ScalarT s = elevation_side(cell, pt);
         ScalarT immersedRatio = 0.;
         if (immersedRatioProvided == 0) { //default case: immersedRatio calculated inside the code from s and H
           if (H > 1e-8) { //make sure H is not too small
@@ -1573,7 +1619,7 @@ calc_dudn_lateral(Kokkos::DynRankView<ScalarT, PHX::Device> & qp_data_returned,
               immersedRatio = 1. - ratio;
           }
          }
-         else {
+         else { //if (cell == 0) std::cout << "HEre" <<std::endl;
            immersedRatio = immersedRatioProvided; //alternate case: immersedRatio is set to some value given in the input file
          }
         ScalarT normalStress = - 0.5 * g *  H * (rho - rho_w * immersedRatio*immersedRatio);

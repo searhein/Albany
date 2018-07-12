@@ -68,6 +68,7 @@ private:
   PHX::MDField<const MeshScalarT>       coordVec;
 
   PHX::MDField<const ParamScalarT>      bed_topo_field;
+  PHX::MDField<const ParamScalarT>      surface_height_field;
   PHX::MDField<const ParamScalarT>      thickness_field;
 
   // Output:

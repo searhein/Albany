@@ -178,11 +178,13 @@ BasalFrictionCoefficient (const Teuchos::ParameterList& p,
 
   if(zero_on_floating) {
     bed_topo_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Bed Topography QP Name"), dl->qp_scalar);
+    surface_height_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Surface Height QP Name"), dl->qp_scalar);
     thickness_field = PHX::MDField<const ParamScalarT>(p.get<std::string> ("Thickness QP Name"), dl->qp_scalar);
     Teuchos::ParameterList& phys_param_list = *p.get<Teuchos::ParameterList*>("Physical Parameter List");
     rho_i = phys_param_list.get<double> ("Ice Density");
     rho_w = phys_param_list.get<double> ("Water Density");
     this->addDependentField (bed_topo_field);
+    this->addDependentField (surface_height_field);
     this->addDependentField (thickness_field);
   }
 
@@ -240,6 +242,7 @@ postRegistrationSetup (typename Traits::SetupData d,
 
   if(zero_on_floating) {
     this->utils.setFieldData(bed_topo_field,fm);
+    this->utils.setFieldData(surface_height_field,fm);
     this->utils.setFieldData(thickness_field,fm);
   }
 
@@ -370,6 +373,7 @@ evaluateFieldsSide (typename Traits::EvalData workset, ScalarT mu, ScalarT lambd
     if(zero_on_floating)
     {
       for (int qp=0; qp<numQPs; ++qp) {
+        //ParamScalarT isGrounded = rho_i*surface_height_field(cell,side,qp) > (rho_i-rho_w)*bed_topo_field(cell,side,qp);
         ParamScalarT isGrounded = rho_i*thickness_field(cell,side,qp) > -rho_w*bed_topo_field(cell,side,qp);
         beta(cell,side,qp) *=  isGrounded;
       }

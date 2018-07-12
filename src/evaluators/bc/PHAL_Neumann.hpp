@@ -188,6 +188,9 @@ protected:
   PHX::MDField<const ParamScalarT,Cell,Node> beta_field;
   PHX::MDField<const ParamScalarT,Cell,Node> roughness_field;
   PHX::MDField<const ParamScalarT,Cell,Node> thickness_field;
+  PHX::MDField<const ParamScalarT,Cell,Node> thickness_up_field;
+  PHX::MDField<const ParamScalarT,Cell,Node> thickness_low_field;
+  PHX::MDField<const ParamScalarT,Cell,Node> thickness_obs_field;
   PHX::MDField<const ParamScalarT,Cell,Node> elevation_field;
   PHX::MDField<const ParamScalarT,Cell,Node> bedTopo_field;
   Teuchos::RCP<shards::CellTopology> cellType;
