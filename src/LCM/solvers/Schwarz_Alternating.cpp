@@ -1209,11 +1209,11 @@ SchwarzLoopDynamics() const
       // Restore previous solutions
       for (auto subdomain = 0; subdomain < num_subdomains_; ++subdomain) {
         Thyra::put_scalar(0.0, this_disp_[subdomain].ptr());
-        Thyra::copy(*this_disp_[subdomain], prev_disp_[subdomain].ptr());
+        Thyra::copy(*ics_disp_[subdomain], this_disp_[subdomain].ptr());
         Thyra::put_scalar(0.0, this_velo_[subdomain].ptr());
-        Thyra::copy(*this_velo_[subdomain], prev_velo_[subdomain].ptr());
+        Thyra::copy(*ics_velo_[subdomain], this_velo_[subdomain].ptr());
         Thyra::put_scalar(0.0, this_acce_[subdomain].ptr());
-        Thyra::copy(*this_acce_[subdomain], prev_acce_[subdomain].ptr());
+        Thyra::copy(*ics_acce_[subdomain], this_acce_[subdomain].ptr());
 
         //restore the state manager with the state variables from the previous
         //loadstep.
@@ -1224,6 +1224,17 @@ SchwarzLoopDynamics() const
         state_mgr = app.getStateMgr();
 
         toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
+
+        //restore the solution in the discretization so the schwarz solver gets
+        // the right boundary conditions!
+        Teuchos::RCP<Tpetra_Vector const>
+        disp_rcp_tpetra;
+
+        disp_rcp_tpetra = ConverterT::getConstTpetraVector(ics_disp_[subdomain]);
+        Teuchos::RCP<Albany::AbstractDiscretization> const &
+        app_disc = app.getDiscretization();
+
+        app_disc->writeSolutionToMeshDatabaseT(*disp_rcp_tpetra, current_time);
       }
 
       // Jump to the beginning of the time-step loop without advancing
@@ -1680,6 +1691,17 @@ SchwarzLoopQuasistatics() const
         state_mgr = app.getStateMgr();
 
         toFrom(state_mgr.getStateArrays(), internal_states_[subdomain]);
+
+        //restore the solution in the discretization so the schwarz solver gets
+        // the right boundary conditions!
+        Teuchos::RCP<Tpetra_Vector const>
+        disp_rcp_tpetra;
+
+        disp_rcp_tpetra = ConverterT::getConstTpetraVector(curr_disp_[subdomain]);
+        Teuchos::RCP<Albany::AbstractDiscretization> const &
+        app_disc = app.getDiscretization();
+
+        app_disc->writeSolutionToMeshDatabaseT(*disp_rcp_tpetra, current_time);
       }
 
       // Jump to the beginning of the continuation loop without advancing
