@@ -154,6 +154,10 @@ private:
   doQuasistaticOutput(ST const time) const;
 
   void
+  setExplicitUpdateInitialGuessForSchwarz(ST const current_time,
+                                          ST const time_step) const;
+
+  void
   setDynamicICVecsAndDoOutput(ST const time) const;
 
   void
