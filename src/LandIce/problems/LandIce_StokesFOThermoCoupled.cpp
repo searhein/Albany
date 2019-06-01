@@ -162,8 +162,8 @@ void StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::RCP<Alban
   // Construct BC evaluators for all possible names of conditions
   // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
   std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
-  Teuchos::ArrayRCP<std::string> dof_names(1);
-  dof_names[0] = "Velocity";
+  Teuchos::ArrayRCP<std::string> dof_name(1);
+  dof_name[0] = "Velocity";
 
   // Note that sidesets are only supported for two and 3D currently
   if(numDim == 2)
@@ -182,7 +182,7 @@ void StokesFOThermoCoupled::constructNeumannEvaluators (const Teuchos::RCP<Alban
 
   nfm.resize(1); // LandIce problem only has one element block
 
-  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+  nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_name, true, 0,
                                           condNames, offsets, dl,
                                           this->params, this->paramLib);
 }
@@ -262,6 +262,7 @@ void StokesFOThermoCoupled::setupEvaluatorRequests ()
 
     ss_utils_needed[basalSideName][UtilityRequest::BFS      ] = true;
     ss_utils_needed[basalSideName][UtilityRequest::QP_COORDS] = true;
+    ss_utils_needed[basalSideName][UtilityRequest::NORMALS] = true;
   }
 }
 
