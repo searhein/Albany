@@ -80,7 +80,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   // Start STK stuff
   this->coordinates_field =
       &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, "coordinates");
-  stk::mesh::put_field_on_mesh(
+  stk::mesh::put_field(
       *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
@@ -90,7 +90,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   } else {
     this->coordinates_field3d = &metaData_->declare_field<VFT>(
         stk::topology::NODE_RANK, "coordinates3d");
-    stk::mesh::put_field_on_mesh(
+    stk::mesh::put_field(
         *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
 #ifdef ALBANY_SEACAS
     stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::MESH);
@@ -105,7 +105,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
         stk::topology::NODE_RANK,
         params_->get<std::string>(
             sol_tag_name[num_vecs], sol_id_name[num_vecs]));
-    stk::mesh::put_field_on_mesh(
+    stk::mesh::put_field(
         *solution_field[num_vecs], metaData_->universal_part(), neq_, nullptr);
 
 #if defined(ALBANY_DTK)
@@ -114,7 +114,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
           stk::topology::NODE_RANK,
           params_->get<std::string>(
               sol_dtk_tag_name[num_vecs], sol_dtk_id_name[num_vecs]));
-      stk::mesh::put_field_on_mesh(
+      stk::mesh::put_field(
           *solution_field_dtk[num_vecs],
           metaData_->universal_part(),
           neq_,
@@ -136,7 +136,7 @@ OrdinarySTKFieldContainer<Interleaved>::OrdinarySTKFieldContainer(
   residual_field = &metaData_->declare_field<VFT>(
       stk::topology::NODE_RANK,
       params_->get<std::string>(res_tag_name[0], res_id_name[0]));
-  stk::mesh::put_field_on_mesh(
+  stk::mesh::put_field(
       *residual_field, metaData_->universal_part(), neq_, nullptr);
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
@@ -181,10 +181,10 @@ OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
       stk::topology::ELEMENT_RANK, "refine_field");
 
   // Processor rank field, a scalar
-  stk::mesh::put_field_on_mesh(
+  stk::mesh::put_field(
       *this->proc_rank_field, this->metaData->universal_part(), nullptr);
 
-  stk::mesh::put_field_on_mesh(
+  stk::mesh::put_field(
       *this->refine_field, this->metaData->universal_part(), nullptr);
 
 #if defined(ALBANY_LCM)
@@ -195,14 +195,14 @@ OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation()
     this->failure_state[rank] =
         &this->metaData->template declare_field<ISFT>(rank, "failure_state");
 
-    stk::mesh::put_field_on_mesh(
+    stk::mesh::put_field(
         *this->failure_state[rank], this->metaData->universal_part(), nullptr);
 
     this->boundary_indicator[rank] =
         &this->metaData->template declare_field<SFT>(
             rank, "boundary_indicator");
 
-    stk::mesh::put_field_on_mesh(
+    stk::mesh::put_field(
         *this->boundary_indicator[rank],
         this->metaData->universal_part(),
         nullptr);

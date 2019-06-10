@@ -103,7 +103,8 @@ getTpetraMap (const Teuchos::RCP<const Thyra_VectorSpace>& vs,
   if (!vs.is_null()) {
     auto tmp = Teuchos::rcp_dynamic_cast<const Thyra_TpetraVectorSpace>(vs,throw_if_not_tpetra);
     if (!tmp.is_null()) {
-      map = tmp->getTpetraMap();
+      // map = tmp->getTpetraMap();
+      map = getTpetraVector(Thyra::createMember(vs))->getMap();
     }
   }
 

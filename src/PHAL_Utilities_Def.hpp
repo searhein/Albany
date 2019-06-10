@@ -239,7 +239,8 @@ create_copy( const std::string& /* name */,
   using Src = Kokkos::DynRankView<T,P...>;
   using Dst = typename Kokkos::DynRankView<T,P...>::non_const_type;
   auto sl = src.layout();
-  auto sm = src.impl_map();
+  // auto sm = src.impl_map();
+  auto sm = src.implementation_map();
   auto fad_rank = src.rank();
   sl.dimension[fad_rank] = sm.dimension_scalar();
   auto real_rank = fad_rank + 1;
