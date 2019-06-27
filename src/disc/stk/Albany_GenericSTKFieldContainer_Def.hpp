@@ -70,6 +70,13 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
   typedef typename AbstractSTKFieldContainer::ScalarFieldType SFT;
   typedef typename AbstractSTKFieldContainer::VectorFieldType VFT;
   typedef typename AbstractSTKFieldContainer::TensorFieldType TFT;
+  
+  static constexpr typename stk::mesh::FieldTraits<SFT>::data_type* init_sval = NULL;
+  static constexpr typename stk::mesh::FieldTraits<VFT>::data_type* init_vval = NULL;
+  static constexpr typename stk::mesh::FieldTraits<TFT>::data_type* init_tval = NULL;
+  static constexpr typename stk::mesh::FieldTraits<QPSFT>::data_type* init_qsval = NULL;
+  static constexpr typename stk::mesh::FieldTraits<QPVFT>::data_type* init_qvval = NULL;
+  static constexpr typename stk::mesh::FieldTraits<QPTFT>::data_type* init_qtval = NULL;
 
   // Code to parse the vector of StateStructs and create STK fields
   for(std::size_t i = 0; i < sis->size(); i++) {
@@ -82,7 +89,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
       {
         // Scalar on cell
         cell_scalar_states.push_back(& metaData->declare_field< SFT >(stk::topology::ELEMENT_RANK, st.name));
-        stk::mesh::put_field_on_mesh(*cell_scalar_states.back(), metaData->universal_part(), 1, nullptr);
+        stk::mesh::put_field_on_mesh(*cell_scalar_states.back(), metaData->universal_part(), 1, init_sval);
 #ifdef ALBANY_SEACAS
         stk::io::set_field_role(*cell_scalar_states.back(), role_type(st.output));
 #endif
@@ -91,7 +98,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
       {
         // Vector on cell
         cell_vector_states.push_back(& metaData->declare_field< VFT >(stk::topology::ELEMENT_RANK, st.name));
-        stk::mesh::put_field_on_mesh(*cell_vector_states.back(), metaData->universal_part(), dim[1], nullptr);
+        stk::mesh::put_field_on_mesh(*cell_vector_states.back(), metaData->universal_part(), dim[1], init_vval);
 #ifdef ALBANY_SEACAS
         stk::io::set_field_role(*cell_vector_states.back(), role_type(st.output));
 #endif
@@ -100,7 +107,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
       {
         // 2nd order tensor on cell
         cell_tensor_states.push_back(& metaData->declare_field< TFT >(stk::topology::ELEMENT_RANK, st.name));
-        stk::mesh::put_field_on_mesh(*cell_tensor_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
+        stk::mesh::put_field_on_mesh(*cell_tensor_states.back(), metaData->universal_part(), dim[2], dim[1], init_tval);
 #ifdef ALBANY_SEACAS
         stk::io::set_field_role(*cell_tensor_states.back(), role_type(st.output));
 #endif
@@ -117,7 +124,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
 
         if(dim.size() == 2){ // Scalar at QPs
           qpscalar_states.push_back(& metaData->declare_field< QPSFT >(stk::topology::ELEMENT_RANK, st.name));
-          stk::mesh::put_field_on_mesh(*qpscalar_states.back(), metaData->universal_part(), dim[1], nullptr);
+          stk::mesh::put_field_on_mesh(*qpscalar_states.back(), metaData->universal_part(), dim[1], init_qsval);
         //Debug
         //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
         //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
@@ -128,7 +135,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
         else if(dim.size() == 3){ // Vector at QPs
           qpvector_states.push_back(& metaData->declare_field< QPVFT >(stk::topology::ELEMENT_RANK, st.name));
           // Multi-dim order is Fortran Ordering, so reversed here
-          stk::mesh::put_field_on_mesh(*qpvector_states.back(), metaData->universal_part(), dim[2], dim[1], nullptr);
+          stk::mesh::put_field_on_mesh(*qpvector_states.back(), metaData->universal_part(), dim[2], dim[1], init_qvval);
           //Debug
           //      cout << "Allocating qpv field name " << qpvector_states.back()->name() <<
           //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ")" <<endl;
@@ -146,7 +153,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
 #endif
           if (dim[1] == 4) {
             stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
-                           metaData->universal_part(), dim[3], dim[2], dim[1], nullptr);
+                           metaData->universal_part(), dim[3], dim[2], dim[1], init_qtval);
           }
           else {
             //IKT, 12/20/18: this changes the way the qp_tensor field 
@@ -157,7 +164,7 @@ addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis)
             //I believe for 2D problems the original layout is correct, hence
             //the if statement above here.  
             stk::mesh::put_field_on_mesh(*qptensor_states.back() ,
-                             metaData->universal_part(), dim[1], dim[2], dim[3], nullptr);
+                             metaData->universal_part(), dim[1], dim[2], dim[3], init_qtval);
           }
 #ifdef ALBANY_SEACAS
           stk::io::set_field_role(*qptensor_states.back(), role_type(st.output));

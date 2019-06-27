@@ -88,7 +88,8 @@ struct NodeData_Traits<T, 1> {
   {
     field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
     // Multi-dim order is Fortran Ordering, so reversed here
-    stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), nullptr);
+    const typename stk::mesh::FieldTraits<field_type>::data_type* init_val=NULL;
+    stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), init_val);
 
     return fld; // Address is held by stk
   }
@@ -128,7 +129,8 @@ struct NodeData_Traits<T, 2> {
   {
     field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
     // Multi-dim order is Fortran Ordering, so reversed here
-    stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), dim[1], nullptr);
+    const typename stk::mesh::FieldTraits<field_type>::data_type* init_val=NULL;
+    stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), dim[1], init_val);
 
     return fld; // Address is held by stk
   }
@@ -173,7 +175,8 @@ struct NodeData_Traits<T, 3> {
   {
     field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
     // Multi-dim order is Fortran Ordering, so reversed here
-    stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), dim[2], dim[1], nullptr);
+    const typename stk::mesh::FieldTraits<field_type>::data_type* init_val=NULL;
+    stk::mesh::put_field_on_mesh(*fld , metaData->universal_part(), dim[2], dim[1], init_val);
 
     return fld; // Address is held by stk
   }

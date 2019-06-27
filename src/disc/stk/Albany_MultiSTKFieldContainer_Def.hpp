@@ -70,7 +70,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   sol_index.resize(solution_vector.size());
 
   // Check the input
-
+  const typename stk::mesh::FieldTraits<VFT>::data_type* init_val = NULL;
   auto const num_derivs = solution_vector[0].size();
   for (auto i = 1; i < solution_vector.size(); ++i) {
     ALBANY_ASSERT(
@@ -88,8 +88,9 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
           sol_tag_name[vec_num], sol_id_name[vec_num]);
       VFT* solution =
           &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, name);
+          
       stk::mesh::put_field_on_mesh(
-          *solution, metaData_->universal_part(), neq_, nullptr);
+          *solution, metaData_->universal_part(), neq_, init_val);
 #ifdef ALBANY_SEACAS
       stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
@@ -103,7 +104,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
       VFT* solution = &metaData_->declare_field<VFT>(
           stk::topology::NODE_RANK, solution_vector[vec_num][0]);
       stk::mesh::put_field_on_mesh(
-          *solution, metaData_->universal_part(), neq_, nullptr);
+          *solution, metaData_->universal_part(), neq_, init_val);
 #ifdef ALBANY_SEACAS
       stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
@@ -131,7 +132,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
           VFT* solution = &metaData_->declare_field<VFT>(
               stk::topology::NODE_RANK, solution_vector[vec_num][i]);
           stk::mesh::put_field_on_mesh(
-              *solution, metaData_->universal_part(), len, nullptr);
+              *solution, metaData_->universal_part(), len, init_val);
 #ifdef ALBANY_SEACAS
           stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
@@ -144,7 +145,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
           SFT* solution = &metaData_->declare_field<SFT>(
               stk::topology::NODE_RANK, solution_vector[vec_num][i]);
           stk::mesh::put_field_on_mesh(
-              *solution, metaData_->universal_part(), nullptr);
+              *solution, metaData_->universal_part(), init_val);
 #ifdef ALBANY_SEACAS
           stk::io::set_field_role(*solution, Ioss::Field::TRANSIENT);
 #endif
@@ -178,7 +179,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     VFT*        residual =
         &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, name);
     stk::mesh::put_field_on_mesh(
-        *residual, metaData_->universal_part(), neq_, nullptr);
+        *residual, metaData_->universal_part(), neq_, init_val);
 #ifdef ALBANY_SEACAS
     stk::io::set_field_role(*residual, Ioss::Field::TRANSIENT);
 #endif
@@ -192,7 +193,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     VFT* residual = &metaData_->declare_field<VFT>(
         stk::topology::NODE_RANK, residual_vector[0]);
     stk::mesh::put_field_on_mesh(
-        *residual, metaData_->universal_part(), neq_, nullptr);
+        *residual, metaData_->universal_part(), neq_, init_val);
 #ifdef ALBANY_SEACAS
     stk::io::set_field_role(*residual, Ioss::Field::TRANSIENT);
 #endif
@@ -220,7 +221,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
         VFT* residual = &metaData_->declare_field<VFT>(
             stk::topology::NODE_RANK, residual_vector[i]);
         stk::mesh::put_field_on_mesh(
-            *residual, metaData_->universal_part(), len, nullptr);
+            *residual, metaData_->universal_part(), len, init_val);
 #ifdef ALBANY_SEACAS
         stk::io::set_field_role(*residual, Ioss::Field::TRANSIENT);
 #endif
@@ -232,8 +233,9 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
         accum += len;
         SFT* residual = &metaData_->declare_field<SFT>(
             stk::topology::NODE_RANK, residual_vector[i]);
+        const typename stk::mesh::FieldTraits<SFT>::data_type* init_sval;
         stk::mesh::put_field_on_mesh(
-            *residual, metaData_->universal_part(), nullptr);
+            *residual, metaData_->universal_part(), init_sval);
 #ifdef ALBANY_SEACAS
         stk::io::set_field_role(*residual, Ioss::Field::TRANSIENT);
 #endif
@@ -267,7 +269,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   this->coordinates_field =
       &metaData_->declare_field<VFT>(stk::topology::NODE_RANK, "coordinates");
   stk::mesh::put_field_on_mesh(
-      *this->coordinates_field, metaData_->universal_part(), numDim_, nullptr);
+      *this->coordinates_field, metaData_->universal_part(), numDim_, init_val);
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
 #endif
@@ -278,7 +280,7 @@ MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
     this->coordinates_field3d = &metaData_->declare_field<VFT>(
         stk::topology::NODE_RANK, "coordinates3d");
     stk::mesh::put_field_on_mesh(
-        *this->coordinates_field3d, metaData_->universal_part(), 3, nullptr);
+        *this->coordinates_field3d, metaData_->universal_part(), 3, init_val);
 #ifdef ALBANY_SEACAS
     if (params_->get<bool>("Export 3d coordinates field",false)) {
       stk::io::set_field_role(*this->coordinates_field3d, Ioss::Field::TRANSIENT);
@@ -347,11 +349,12 @@ MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation()
       stk::topology::ELEMENT_RANK, "refine_field");
 
   // Processor rank field, a scalar
+  const typename stk::mesh::FieldTraits<ISFT>::data_type* init_ival = NULL;
   stk::mesh::put_field_on_mesh(
-      *this->proc_rank_field, this->metaData->universal_part(), nullptr);
+      *this->proc_rank_field, this->metaData->universal_part(), init_ival);
 
   stk::mesh::put_field_on_mesh(
-      *this->refine_field, this->metaData->universal_part(), nullptr);
+      *this->refine_field, this->metaData->universal_part(), init_ival);
 
 #if defined(ALBANY_LCM)
   // Failure state used for mesh adaptation
