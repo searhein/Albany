@@ -209,19 +209,22 @@ ANONYMOUS:
                 FROSch:
                   FROSch Preconditioner Type: TwoLevelPreconditioner
                   OverlappingOperator Type: AlgebraicOverlappingOperator
-                  CoarseOperator Type: RGDSWCoarseOperator
+                  CoarseOperator Type: IPOUHarmonicCoarseOperator
+                  Recycling: true
                   Dimension : 3
                   DofsPerNode : 2
-                  Overlap: 1
+                  Overlap: 2
                   Null Space Type: Input
                   AlgebraicOverlappingOperator:
-                    Adding Layers Strategy: CrsMatrix
+                    'Reuse: Symbolic Factorization': true
+                    Adding Layers Strategy: CrsGraph
                     Solver:
                       SolverType: Amesos2
-                      Solver: Umfpack
-                      Ifpack2:
-                        'fact: iluk level-of-fill': 0
+                      Solver: Klu
                   IPOUHarmonicCoarseOperator:
+                    'Reuse: Coarse Basis': true
+                    'Reuse: Coarse Matrix': false
+                    'Reuse: Coarse Matrix Symbolic Factorization': true
                     Blocks:
                       1:
                         InterfacePartitionOfUnity:
@@ -231,22 +234,16 @@ ANONYMOUS:
                           RGDSW:
                             Type: Full
                             Distance Function: Inverse Euclidean
-                  RGDSWCoarseOperator:
-                    Blocks:
-                      1:
-                        Use For Coarse Space: true
-                        Rotations: false
+                        Interface Communication Strategy: CreateOneToOneMap
                     ExtensionSolver:
                       SolverType: Amesos2
-                      Solver: Umfpack
-                      Ifpack2:
-                        'fact: iluk level-of-fill': 0
+                      Solver: Klu
                     Distribution:
                       Type: linear
                       NumProcs: 1
                     CoarseSolver:
                       SolverType: Amesos2
-                      Solver: Umfpack
+                      Solver: Klu
           Rescue Bad Newton Solve: true
       Line Search: 
         Full Step: 
