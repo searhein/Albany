@@ -251,7 +251,7 @@ struct Epetra_NullSpace_Traits {
    : Ndof(ndof), NscalarDof(nscalardof), NSdim(nsdim), vec_leng(veclen), Array(array) {}
 
   void zero(){
-    for (array_type::size_type i = 0; i < vec_leng*(NSdim + NscalarDof); i++)
+    for (array_type::size_type i = 0; i < vec_leng*(NSdim); i++)
        Array[i] = 0.0;
   }
 
@@ -311,7 +311,7 @@ setPiroPL(const Teuchos::RCP<Teuchos::ParameterList>& piroParams)
       plist = sublist(sublist(stratList, "Preconditioner Types"), ptype);
       froschUsed = true;
     }
-  } 
+  }
 
   if (mlUsed) {
     traits = Teuchos::rcp( new TraitsImpl<Epetra_NullSpace_Traits>());
@@ -425,10 +425,10 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
 
       if(nullSpaceDim > 0) {
         if (setNonElastRBM == true) {
-          err.resize((nullSpaceDim + numScalar) * numSpaceDim * numNodes);
+          err.resize(nullSpaceDim * numSpaceDim * numNodes);
         }
         else {
-          err.resize((nullSpaceDim + numScalar) * numPDEs * numNodes);
+          err.resize(nullSpaceDim * numPDEs * numNodes);
         }
       }
 
@@ -440,7 +440,7 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
         Coord2RBM<Epetra_NullSpace_Traits>(coordMV, numPDEs, numScalar, nullSpaceDim, err);
 
       plist->set("null space: type", "pre-computed");
-      plist->set("null space: dimension", nullSpaceDim + numScalar);
+      plist->set("null space: dimension", nullSpaceDim);
       plist->set("null space: vectors", &err[0]);
       plist->set("null space: add default vectors", false);
 
@@ -449,7 +449,7 @@ setCoordinatesAndNullspace(const Teuchos::RCP<Thyra_MultiVector>& coordMV_in,
       auto t_traits = Teuchos::rcp_dynamic_cast<TraitsImpl<Traits>>(traits);
       auto& trr = t_traits->arr;
       trr = Teuchos::rcp(new Tpetra_NullSpace_Traits::base_array_type(getTpetraMap(soln_vs),
-                               nullSpaceDim + numScalar, false));
+                               nullSpaceDim, false));
 
       subtractCentroid(coordMV);
 
